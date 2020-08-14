@@ -1,0 +1,44 @@
+{
+  "name": "icar-site",
+  "version": "0.0.1",
+  "description": "Kamil's portfolio",
+  "main": "index.js",
+  "scripts": {
+    "dev": "nodemon server/index.js"
+  },
+  "keywords": [
+    "React.js",
+    "Express.js",
+    "Node.js",
+    "Html",
+    "CSS",
+    "JavaScript",
+    "dev",
+    "developer",
+    "front",
+    "frontend",
+    "backend",
+    "full",
+    "stack",
+    "portfolio",
+    "mysql",
+    "sql",
+    "mongodb",
+    "mern",
+    "ssr"
+  ],
+  "author": "Kamil Majek",
+  "license": "CC-BY-3.0",
+  "dependencies": {
+    "axios": "^0.19.2",
+    "dotenv": "^8.2.0",
+    "express": "^4.17.1",
+    "multer": "^1.4.2",
+    "mysql": "^2.18.1",
+    "next": "^9.5.2",
+    "nodemon": "^2.0.4",
+    "path": "^0.12.7",
+    "react": "^16.13.1",
+    "react-dom": "^16.13.1"
+  }
+}

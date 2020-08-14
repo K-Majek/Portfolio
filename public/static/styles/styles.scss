@@ -1,0 +1,212 @@
+@import "./_vars.scss";
+/*----------------------------------------default------------------------------------*/
+html, body { margin: 0; padding: 0; font-family: 'Dosis', cursive, sans-serif;}
+input, textarea, button{
+    width: 50%;
+    min-width: 200px;
+    height: 10%;
+}
+#submit-button{
+    font-family: 'Dosis', cursive, sans-serif;
+    height: 5vh;
+}
+p { font-family: 'Dosis', sans-serif; font-size: 14px; font-weight: 200; }
+h1 { font-size: 26px; }
+h2 { font-size: 24px; }
+h3 { font-size: 22px; }
+h4 { font-size: 20px; }
+h5 { font-size: 18px; }
+h6 { font-size: 16px; }
+html > *{
+    font-family: 'Dosis', sans-serif;
+}
+h1,h2,h3,h4,h5,h6{
+    font-family: 'Dosis', sans-serif;
+    font-weight: 500;
+}
+textarea{
+    height: 20vh
+}
+li {list-style: none;}
+::-webkit-scrollbar {
+    width: 10px;
+  }
+  
+  /* Track */
+  ::-webkit-scrollbar-track {
+    position: relative;
+    left: -1vw;
+    background: transparent; 
+    border-radius: 15px;
+  }
+   
+  /* Handle */
+  ::-webkit-scrollbar{
+      width: 10px;
+      opacity: 0.5;
+  }
+  ::-webkit-scrollbar-thumb {
+    background: $border; 
+    border-radius: 15px;
+  }
+/*--------------------------------------containers-----------------------------------*/
+
+/*-----------------------------------------states------------------------------------*/
+.is-hidden{
+    display: none;
+    pointer-events: none;
+}
+.is-collapsed{
+    animation: hide 0.5s linear forwards;
+    pointer-events: none;
+}
+.as-background{
+    z-index: -1;
+}
+/*------------------------------------element effects--------------------------------*/
+.rounded{
+    border-radius: 10px;
+    &-left-only{
+        border-radius: 10px 0 0 10px;
+    }
+    &-bottom-only{
+        border-radius: 0 0 10px 10px;
+    }
+    &-right-only{
+        border-radius: 0 10px 10px 0;
+    }
+    &-top-only{
+        border-radius: 10px 10px 0 0;
+    }
+}
+.circle{
+    border-radius: 50%;
+}
+.side-padding{
+    &-l{padding: 0 1vw;}
+    &-h{padding: 0 2vw;}
+}
+.top-padding{
+    &-l{padding: 1vw 0;}
+    &-h{padding: 2vw 0;}
+}
+.side-margin{
+    &-l{margin: 0 1vw;}
+    &-h{margin: 0 2vw;}
+}
+.top-margin{
+    &-l{margin: 1vh 0;}
+    &-h{margin: 2vh 0;}
+}
+.margin{
+    &-l{margin: 1vh 1vw;}
+    &-h{margin: 2vh 2vw;}
+    &-auto{margin: auto;}
+}
+.overflow-hide{
+    overflow: hidden;
+}
+.scroll{
+    overflow-y: auto;
+    overflow-x: hidden;
+}
+.hide-overflow{
+    overflow-y: hidden;
+    overflow-x: hidden;
+}
+.opacity{
+    &-l{opacity: 0.25;}
+    &-m{opacity: 0.5;}
+    &-h{opacity: 0.75;}
+}
+.clip{
+    clip-path: polygon(100% 0, 100% 85%, 50% 100%, 0 85%, 0 0);
+}
+.pointer{
+    cursor: pointer;
+}
+
+/*----------------------------------------position-----------------------------------*/
+.flex{
+                                /*DISCLAIMER*/
+    /*x - justify, y - align*/
+    /*x is the current direction of flex, y is the counter-direction.*/
+    /*default direction is row. flex-direction: column inverts x and y*/
+    /*align-items is for single, non wrapped rows*/
+    /*align-content is for wrapped rows*/
+    display: flex;
+    &-column{
+        flex-direction: column;
+    }
+    &-row{
+        flex-direction: row;
+    }
+    &-center{
+        justify-content: center;
+        align-items: center;
+    }
+    &-wrap{
+        flex-wrap: wrap;
+        &-center{
+            flex-wrap: wrap;
+            align-content: center;
+        }
+    }
+}
+.text{
+    &-center{
+        text-align: center;
+    }
+}
+.absolute{
+    position: absolute;
+}
+.relative{
+    position: relative;
+}
+.sticky{
+    position: sticky;
+}
+.fixed{
+    position: fixed;
+}
+.position-reset{
+    top: 0;
+    left: 0;
+}
+/*---------------------------keyframes--animation-------------------------*/
+
+/*----------------------------------queries-------------------------------*/
+
+@media only screen
+    and (max-device-width: 480) {
+
+    }
+
+@media only screen
+    and (min-device-width: 481) 
+    and (max-device-width: 767) {
+
+    }
+
+@media only screen
+    and (min-device-width: 768) 
+    and (max-device-width: 1024) {
+
+    }
+
+@media only screen
+    and (min-device-width: 1025) 
+    and (max-device-width: 1365) {
+        
+    }
+
+@media only screen
+    and (min-device-width: 1366) 
+    and (max-device-width: 1920){
+
+    }
+@media only screen
+    and (min-device-width: 1920) {
+
+    }
