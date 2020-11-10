@@ -5,21 +5,21 @@ import Footer from "../components/Footer";
 export default class Contact extends React.Component {
     componentDidMount() {
         let supervisor = document.querySelector(".lazy-loader");
-        supervisor.classList.add("displaycontent");
+        if(!supervisor.classList.contains("displaycontent")) supervisor.classList.add("displaycontent");
         let nav = document.querySelectorAll('.navbar-item[element-value]:not([element-value="/contact"])');
         for(let i = 0; i < nav.length; i++){
         nav[i].addEventListener("click", () => {
             let supervisor = document.querySelector(".lazy-loader");
-            supervisor.classList.remove("displaycontent");
-            supervisor.classList.add("enter-loading");
+            if(supervisor.classList.contains("displaycontent"))supervisor.classList.remove("displaycontent");
+            if(!supervisor.classList.contains("enter-loading"))supervisor.classList.add("enter-loading");
         });
         }
         let footer = document.querySelectorAll('.footer-link[element-value]:not([element-value="/contact"])');
         for(let i = 0; i < nav.length; i++){
         footer[i].addEventListener("click", () => {
             let supervisor = document.querySelector(".lazy-loader");
-            supervisor.classList.remove("displaycontent");
-            supervisor.classList.add("enter-loading");
+            if(supervisor.classList.contains("displaycontent"))supervisor.classList.remove("displaycontent");
+            if(!supervisor.classList.contains("enter-loading"))supervisor.classList.add("enter-loading");
         });
         }
     }

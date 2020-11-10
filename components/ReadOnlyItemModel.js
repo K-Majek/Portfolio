@@ -112,13 +112,3 @@ export default class ReadOnlyItemModel extends React.Component {
         }
     }
 }
-
-/*
-    props:
-    * bool readonly (editable only in cpanel) ~!exploitable!~
-    * image or website
-    * if website - outer url
-    * if image - link to HQ version
-    * description
-    * visible thumbnail
-*/

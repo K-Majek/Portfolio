@@ -106,16 +106,16 @@ export default class Index extends React.Component {
         for(let i = 0; i < nav.length; i++){
         nav[i].addEventListener("click", () => {
             let supervisor = document.querySelector(".lazy-loader");
-            supervisor.classList.remove("displaycontent");
-            supervisor.classList.add("enter-loading");
+            if(supervisor.classList.contains("displaycontent"))supervisor.classList.remove("displaycontent");
+            if(!supervisor.classList.contains("enter-loading"))supervisor.classList.add("enter-loading");
         });
         }
         let footer = document.querySelectorAll('.footer-link[element-value]:not([element-value="/index"])');
         for(let i = 0; i < nav.length; i++){
         footer[i].addEventListener("click", () => {
             let supervisor = document.querySelector(".lazy-loader");
-            supervisor.classList.remove("displaycontent");
-            supervisor.classList.add("enter-loading");
+            if(supervisor.classList.contains("displaycontent"))supervisor.classList.remove("displaycontent");
+            if(!supervisor.classList.contains("enter-loading"))supervisor.classList.add("enter-loading");
         });
         }
     }
