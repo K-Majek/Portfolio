@@ -41,14 +41,14 @@ export default class List_Items extends React.Component {
     }
     render() {
         return (
-            <div className="flex flex-center flex-column region-full">
-                <div className="region-piece-1-2">
-                    <div className="region-piece-1-3 flex flex-center">Images</div>
-                    <div className="region-piece-2-3 flex flex-center flex-column">{this.state.imagecontent}</div>
+            <div className="flex flex-direction-column">
+                <div className="region-1-2">
+                    <div className="list flex flex-align-center flex-justify-center">Images</div>
+                    <div className="list-content flex flex-align-center flex-justify-center flex-direction-column">{this.state.imagecontent}</div>
                 </div>
-                <div className="region-piece-1-2">
-                    <div className="region-piece-1-3 flex flex-center">Websites</div>
-                    <div className="region-piece-2-3 flex flex-center flex-column">{this.state.webcontent}</div>
+                <div className="region-1-2">
+                    <div className="list flex flex-align-center flex-justify-center">Websites</div>
+                    <div className="list-content flex flex-align-center flex-justify-center flex-direction-column">{this.state.webcontent}</div>
                 </div>
             </div>
         );

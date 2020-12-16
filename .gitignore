@@ -4,4 +4,6 @@ node_modules/
 .next/
 public/static/images/*
 legacy/
+legacy/styling
 test/
+*.scss

@@ -6,44 +6,14 @@ const path = require("path");
 const bcrypt = require("bcrypt");
 const Busboy = require('busboy');
 const model = require("../../server/index");
+const { send } = require("process");
+const sharp = require("sharp");
 require("dotenv").config({ path: path.join(__dirname, "..", "..", "config", ".env")});
 
 
 exports.SandboxLab = (req, res) => {
-
+    
     console.log(test());
-}
-
-exports.GetImages = async (req, res) => {
-    await model.getConnection((err, connection) => {
-        if (err) {res.end("Server maintenance. Try again later."); throw err;}
-        connection.query(`SELECT * FROM ${process.env.DB_NAME}.images`, function (error, results, fields) {
-          // When done with the connection, release it.
-          if (error) {connection.release(); res.status(503).send("Service is unavailable"); throw error;}
-          else {
-            let parsedResults = JSON.stringify(results);
-            res.end(parsedResults);
-            // res.status(200).send(results);
-            connection.release();
-          }
-        });
-    });
-}
-
-exports.GetWebsites = async (req,res) => {
-    await model.getConnection((err, connection) => {
-        if (err) {res.end("Server maintenance. Try again later."); throw err;}
-        connection.query(`SELECT * FROM ${process.env.DB_NAME}.websites`, function (error, results, fields) {
-          // When done with the connection, release it.
-          if (error) {connection.release(); res.status(503).send("Service is unavailable"); throw error;}
-          else {
-            let parsedResults = JSON.stringify(results);
-            res.end(parsedResults);
-            // res.status(200).send(results);
-            connection.release();
-          }
-        });
-    });
 }
 
 exports.Login = (req, res) => {
@@ -100,10 +70,10 @@ exports.Login = (req, res) => {
     });
     busboy.on('finish', function() {
         if(Object.keys(busboyBody.fields).length === 2){
-        check(busboyBody.fields.field0.val, busboyBody.fields.field1.val);
+            check(busboyBody.fields.field0.val, busboyBody.fields.field1.val);
         }
         else{
-        res.status(400).send("What are you trying to do?");
+            res.status(400).send("What are you trying to do?");
         }
     });
     req.pipe(busboy);
@@ -119,16 +89,21 @@ exports.Login = (req, res) => {
                         res.status(401).send("Username does not exist.");
                     }
                     else {
+                        //incoming query got unexpected content between array indexes, so 4 next lines are for removing this.
                         let stringifyQuery = JSON.stringify(results);
                         let parsedJSON = JSON.parse(stringifyQuery);
                         let bufferize = Buffer.from(parsedJSON[0].password.data);
                         let parsedBuffer = bufferize.toString('utf8');
+
+                        //bcrypt compares the password then returns a boolean
                         bcrypt.compare(password, parsedBuffer, function(err, result) {
-                        if(err){connection.release(); res.status(503).send("An error has been occurred!"); throw err;}
-                        else{
-                        console.log(`result of trying to log in for user "${username}" on "${new Date().toString()}": ${result}`);
-                        connection.release();
-                        login(result);
+                            if(err){connection.release(); res.status(503).send("An error has been occurred!"); throw err;}
+                            else{
+                                console.log(`result of trying to log in for user "${username}" on "${new Date().toString()}": ${result}`);
+                                connection.release();
+
+                                //result of comparing is passed to login function
+                                login(result);
                             }
                         });
                     }
@@ -139,6 +114,8 @@ exports.Login = (req, res) => {
             throw error;
         }
     }
+
+    //if the data is true, server lets view to login the user, otherwise it shows error
     function login(data) {
     try {
         if(data){res.status(200).send("Logged in successfully. Redirecting...");}
@@ -238,7 +215,7 @@ exports.Register = (req, res) => {
                             }
                         }
                         if(match){
-                            res.end("username already exists, choose another one")
+                            res.status(403).send("username already exists, choose another one");
                         }
                         else{
                             connection.query(`INSERT INTO users VALUES (?, ?, ?)`, [username, password, "N"], function (error, results, fields) {
@@ -263,19 +240,48 @@ exports.Register = (req, res) => {
     }
 }
 
-exports.SendImage = (req, res) => {
+exports.GetImages = async (req, res) => { //R in CRUD
+    await model.getConnection((err, connection) => {
+        if (err) {res.end("Server maintenance. Try again later."); throw err;}
+        connection.query(`SELECT * FROM ${process.env.DB_NAME}.images`, function (error, results, fields) {
+          // When done with the connection, release it.
+          if (error) {connection.release(); res.status(503).send("Service is unavailable"); throw error;}
+          else {
+            let parsedResults = JSON.stringify(results);
+            res.end(parsedResults);
+            connection.release();
+          }
+        });
+    });
+}
+
+exports.GetWebsites = async (req,res) => { //R in CRUD
+    await model.getConnection((err, connection) => {
+        if (err) {res.end("Server maintenance. Try again later."); throw err;}
+        connection.query(`SELECT * FROM ${process.env.DB_NAME}.websites`, function (error, results, fields) {
+          // When done with the connection, release it.
+          if (error) {connection.release(); res.status(503).send("Service is unavailable"); throw error;}
+          else {
+            let parsedResults = JSON.stringify(results);
+            res.end(parsedResults);
+            connection.release();
+          }
+        });
+    });
+}
+exports.SendContent = (req, res) => { //C in CRUD
     let busboyBody = {
         files: {},
         fields: {}
     };
-    let filecheck = [];
     const busboy = new Busboy({ headers: req.headers });
     busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
         let id = Object.keys(busboyBody.files).length;    
-        busboyBody.files["file" + id] = {
+        busboyBody.files[`file${id}`] = {
             fieldname: fieldname,
             file: file,
             filename: filename,
+            filenameTruncated: filename.slice(0, filename.lastIndexOf(".")),
             encoding: encoding,
             mimetype: mimetype,
             extension: filename.slice(filename.lastIndexOf("."))
@@ -296,22 +302,22 @@ exports.SendImage = (req, res) => {
         });
         file.on('end', function() {
             if(buffer){
-                if(busboyBody.files["file" + id].extension === ".svg" || busboyBody.files["file" + id].extension === ".png" || busboyBody.files["file" + id].extension === ".jpg"){
-                    busboyBody.files["file" + id].data = buffer;
-                    busboyBody.files["file" + id].lock = false;
+                if(busboyBody.files[`file${id}`].extension === ".svg" || busboyBody.files[`file${id}`].extension === ".png" || busboyBody.files[`file${id}`].extension === ".jpg"){
+                    busboyBody.files[`file${id}`].data = buffer;
+                    busboyBody.files[`file${id}`].lock = false;
                 }
                 else{
-                    busboyBody.files["file" + id].lock = true;
+                    busboyBody.files[`file${id}`].lock = true;
                 }
             }
             else{
-                busboyBody.files["file" + id].lock = true;
+                busboyBody.files[`file${id}`].lock = true;
             }
         });
     });
     busboy.on('field', function(fieldname, val, fieldnameTruncated, valTruncated, encoding, mimetype) {
         let id = Object.keys(busboyBody.fields).length;
-        busboyBody.fields["field" + id] = {
+        busboyBody.fields[fieldname] = {
             fieldname: fieldname,
             val: val,
             fieldnameTruncated: fieldnameTruncated,
@@ -321,95 +327,177 @@ exports.SendImage = (req, res) => {
         };
     });
     busboy.on('finish', function() {
-        fileChecker();
-        res.end();
+        console.log(busboyBody);
+        send();
     });
     req.pipe(busboy);
 
-
-
-    function fileChecker() { //fetches buffer lock info
-        let tmp = [];
-        for(let i = 0; i < Object.keys(busboyBody.files).length; i++){
-            tmp.push(busboyBody.files[`file${i}`].lock);
-        }
-        filecheck = tmp;
-        createFiles();
-    };
-    async function createFiles() {
-        if(!filecheck.includes(true) && filecheck.length >= 1){ //if checker doesn't include locked buffers and is not empty, proceed
-            await model.getConnection(function(err, connection) {
-                if (err) throw err; // not connected!
-                // Use the connection
-                let query = `INSERT INTO ${process.env.DB_NAME}.images VALUES (?, ?, ?, ?, ?)`;
-                let values = [];
-                let title = "N/A";
-                let description = "";
-
-                for( let i = 0; i < Object.keys(busboyBody.fields).length; i++){
-                    if(busboyBody.fields["field" + i].fieldname === "title"){ //api gets the field "title" value on its own
-                        title = busboyBody.fields["field" + i].val;
-                    }
-                    if(busboyBody.fields["field" + i].fieldname === "description"){ //api gets the field "title" value on its own
-                        description = busboyBody.fields["field" + i].val;
-                    }
-                }
-                let stamp = Date.now().toString();
-                let url = `static/images/image-${stamp}${busboyBody.files["file" + i].extension}`;
-                let thumbnailurl = `static/images/image-${stamp}-min${busboyBody.files["file" + (i + 1)].extension}`;
-                if(i == 0){
-                    values.push(stamp, url, thumbnailurl, title, description);
-                }
-                else{
-                    query += ", (? ,? ,?, ?, ?)";
-                    values.push(stamp, url, thumbnailurl, title, description);
-                }
-                connection.query(query, values, function (error, results, fields) {
-                    // When done with the connection, release it.
-                    if (error) {throw error;}
-                    else {
-                        let writer = fs.createWriteStream(`public/` + values[1]);
-
-                        busboyBody.files["file" + 0].file.pipe(writer);  //pipe connects readable stream to the writeable stream   
-
-                        for( let j = 0; j < busboyBody.files["file" + 0].data.length; j++){ //loop handles all the existing parsed buffers
-                            writer.write(busboyBody.files["file" + 0].data[j]); //both .write and .end write to the writeable stream. Difference? .end also closes the stream
+    const send = async () => {
+        model.getConnection((err, connection) => {
+            if(err) console.log(err);
+            switch(busboyBody.fields.type.val){
+                case "website": {
+                    let query = `INSERT INTO ${process.env.DB_NAME}.items VALUES (?, ?, ?, ?, ?, ?, ?)`;
+                    let id = Date.now().toString();
+                    let title = busboyBody.fields.title.val;
+                    let description = busboyBody.fields.description.val;
+                    let innerurl = `static/images/website-${id}${busboyBody.files["file0"].extension}`;
+                    let outerurl = busboyBody.fields.outerurl.val;
+                    let code = busboyBody.fields.code.val ? busboyBody.fields.code.val : ""; //code is a must
+                    let type = busboyBody.fields.type.val;
+                    let values = [id, title, description, innerurl, outerurl, code, type];
+                    const original_path = `public/static/images/website-${id}${busboyBody.files["file0"].extension}`
+                    const temp_path = `public/static/images/website-${id}-temp${busboyBody.files["file0"].extension}`
+                    connection.query(query, values, async (error, results, fields) => {
+                        if(error) { 
+                            connection.release(); 
+                            console.log(error); 
                         }
-
-                        writer.end(); //do not try to write to file after end
-                        let writermin = fs.createWriteStream(`public/` + values[2]);
-
-                        busboyBody.files["file" + 1].file.pipe(writermin);  //pipe connects readable stream to the writeable stream   
-
-                        for( let j = 0; j < busboyBody.files["file" + 1].data.length; j++){ //loop handles all the existing parsed buffers
-                            writermin.write(busboyBody.files["file" + 1].data[j]); //both .write and .end write to the writeable stream. Difference? .end also closes the stream
-                        }
-
-                        writermin.end(); //do not try to write to file after end
-
-                        res.status(200);
-                        if (filecheck.length > 1){ //checks if there's more than one file coming from frontend and responds depending on it
-                            res.end("files have been uploaded successfully");
-                        } 
                         else {
-                            res.end("file has been uploaded successfully");
+                            let writer = fs.createWriteStream(original_path)
+                            busboyBody.files["file0"].file.pipe(writer);  //pipe connects readable stream to the writeable stream   
+
+                            for( let i = 0; i < busboyBody.files["file0"].data.length; i++){ //loop handles all the existing parsed buffers
+                                writer.write(busboyBody.files["file0"].data[i]); //both .write and .end write to the writeable stream. Difference? .end also closes the stream
+                            }
+
+                            writer.end(); //do not try to write to file after end
+                            try { 
+                                if(busboyBody.files["file0"].extension.toLowerCase() === ".jpg" || busboyBody.files["file0"].extension.toLowerCase() === ".jpeg"){
+                                    await sharp(original_path).png()
+                                    .resize(420, 313)
+                                    .toFile(temp_path)
+                                    .then(() => {
+                                        fs.unlink(original_path, (err) => { 
+                                            if(err) {console.log(err)}
+                                            else{
+                                                fs.rename(temp_path, original_path, () => {
+                                                    console.log("renamed");
+                                                });
+                                            }
+                                        });
+                                    });
+                                }
+                                else if(busboyBody.files["file0"].extension.toLowerCase() === ".png"){
+                                    await sharp(original_path)
+                                        .png()
+                                        .resize(420, 313)
+                                        .toFile(temp_path)
+                                        .then(() => {
+                                            fs.unlink(original_path, (err) => { 
+                                                if(err) {console.log(err)}
+                                                else{
+                                                    fs.rename(temp_path, original_path, () => {
+                                                        console.log("renamed");
+                                                    });
+                                                }
+                                            });
+                                        });
+                                }
+                                else {
+                                    res.status(415).send("Unsupported file extension");
+                                }
+                            }
+                            catch (err) { 
+                                console.log(err); 
+                            } 
+                            finally{
+                                connection.release();
+                            }
                         }
-                    }
+                    });
+                    break;
+                }
+                case "image": {
+                    let query = `INSERT INTO ${process.env.DB_NAME}.items VALUES (?, ?, ?, ?, ?, ?, ?)`;
+                    let id = Date.now().toString();
+                    let title = busboyBody.fields.title.val;
+                    let description = busboyBody.fields.description.val;
+                    let file = `image-${id}${busboyBody.files["file0"].extension}`;
+                    let file_temp = `image-${id}-tmp${busboyBody.files["file0"].extension}`;
+                    let file_minified = `image-${id}-min${busboyBody.files["file0"].extension}`;
+                    let serverpath = "public/static/images/";
+                    let code = ""; //code is a must
+                    let type = busboyBody.fields.type.val;
+                    let values = [id, title, description, file_minified, file, code, type];
+                    connection.query(query, values, (error, results, fields) => {
+                        if(error) { 
+                            connection.release(); 
+                            console.log(error); 
+                        }
+                        else {
+                            let writer = fs.createWriteStream(serverpath + file);
+                            busboyBody.files["file0"].file.pipe(writer);  //pipe connects readable stream to the writeable stream   
+
+                            for( let i = 0; i < busboyBody.files["file0"].data.length; i++){ //loop handles all the existing parsed buffers
+                                writer.write(busboyBody.files["file0"].data[i]); //both .write and .end write to the writeable stream. Difference? .end also closes the stream
+                                console.log("writing is pending");
+                            }
+
+                            writer.end(); //do not try to write to file after end
+                            try { 
+                                console.log("try block here");
+                                if(busboyBody.files["file0"].extension.toLowerCase() === ".jpg" || busboyBody.files["file0"].extension.toLowerCase() === ".jpeg"){
+                                    fs.copyFile(serverpath + file, serverpath + file_temp, async () => {
+                                        await sharp(serverpath + file_temp)
+                                            .jpeg({ quality: 80 })
+                                            .toFile(serverpath + file_minified)
+                                            .then(() => {
+                                                console.log(`file ${busboyBody.files["file0"].filename} should be changed into ${file_minified}`);
+                                            })
+                                            .catch((e) => {console.log(e);});
+                                    });
+                                }
+                                else if(busboyBody.files["file0"].extension.toLowerCase() === ".png"){
+                                    fs.copyFile(outerurl, temp_path, async () => {
+                                        await sharp(temp_path)
+                                            .png({ quality: 50 })
+                                            .toFile(innerurl)
+                                            .then(() => {
+                                                console.log(`file ${busboyBody.files["file0"].filename} should be changed into ${innerurl.slice(innerurl.lastIndexOf("/"))}`);
+                                                res.status(200).send("ok");
+                                            })
+                                            .catch((e) => {console.log(e);});
+                                    });
+                                }
+                                else if(busboyBody.files["file0"].extension.toLowerCase() === ".webp"){
+                                    fs.copyFile(outerurl, temp_path, async () => {
+                                        await sharp(temp_path)
+                                            .webp({ quality: 50 })
+                                            .toFile(innerurl)
+                                            .then(() => {
+                                                console.log(`file ${busboyBody.files["file0"].filename} should be changed into ${innerurl.slice(innerurl.lastIndexOf("/"))}`);
+                                                res.status(200).send("ok");
+                                            })
+                                            .catch((e) => {console.log(e);});
+                                    });
+                                }
+                                else {
+                                    console.log("file failed to optimise");
+                                    res.status(415).send("wrong media type");
+                                }
+                            } 
+                            catch (err) { 
+                                console.log(err); 
+                            } 
+                            finally{
+                                connection.release();
+                            }
+                        }
+                    });
+                    break;
+                }
+                default:
+                    res.status(422).send("Wrong request");
                     connection.release();
-                    console.log("Results of the database query: ");
-                    console.log(results);
-                });
-            });
+                break;
+            }
+        });
         
-        }
-        else{
-            console.log(filecheck);
-            res.status(422).send("only JPG, SVG, PNG up to 5MB are allowed.");
-        }
     }
 }
 
-exports.SendWebsite = (req, res) => {
+exports.UpdateContent = (req, res) => {
     let busboyBody = {
         files: {},
         fields: {}
@@ -418,7 +506,7 @@ exports.SendWebsite = (req, res) => {
     const busboy = new Busboy({ headers: req.headers });
     busboy.on('file', function(fieldname, file, filename, encoding, mimetype) {
         let id = Object.keys(busboyBody.files).length;    
-        busboyBody.files["file" + id] = {
+        busboyBody.files[fieldname] = {
             fieldname: fieldname,
             file: file,
             filename: filename,
@@ -456,8 +544,7 @@ exports.SendWebsite = (req, res) => {
         });
     });
     busboy.on('field', function(fieldname, val, fieldnameTruncated, valTruncated, encoding, mimetype) {
-        let id = Object.keys(busboyBody.fields).length;
-        busboyBody.fields["field" + id] = {
+        busboyBody.fields[fieldname] = {
             fieldname: fieldname,
             val: val,
             fieldnameTruncated: fieldnameTruncated,
@@ -467,91 +554,82 @@ exports.SendWebsite = (req, res) => {
         };
     });
     busboy.on('finish', function() {
-        fileChecker();
-        res.end();
+        // console.log(busboyBody);
+        send();
     });
     req.pipe(busboy);
 
-
-
-    function fileChecker() { //fetches buffer lock info
-        let tmp = [];
-        for(let i = 0; i < Object.keys(busboyBody.files).length; i++){
-            tmp.push(busboyBody.files[`file${i}`].lock);
-        }
-        filecheck = tmp;
-        createFiles();
-    };
-    async function createFiles() {
-        if(!filecheck.includes(true) && filecheck.length >= 1){ //if checker doesn't include locked buffers and is not empty, proceed
-            await model.getConnection(function(err, connection) {
-                if (err) throw err; // not connected!
-                // Use the connection
-                let query = `INSERT INTO ${process.env.DB_NAME}.websites VALUES (?, ?, ?, ?, ?, ?)`;
-                let values = [];
-                let title = "";
-                let description = "";
-                let code = "";
-                let url = "";
-                for( let i = 0; i < Object.keys(busboyBody.fields).length; i++){ //loop gets the required values for variables
-                    if(busboyBody.fields["field" + i].fieldname === "title"){
-                        title = busboyBody.fields["field" + i].val;
+    async function send() {
+        switch(busboyBody.fields.type.val){
+            case "github":
+                if(busboyBody.fields.id.val){
+                    try{
+                        await model.getConnection((err, connection) => {
+                            if (err) {res.end("Server maintenance. Try again later."); console.log(err);}
+                            connection.query(`UPDATE ${process.env.DB_NAME}.websites SET title = ?, description = ?, innerurl = ?, outerurl = ?, code = ? WHERE id = ?`, [busboyBody.fields.title.val || "", busboyBody.fields.description.val || "", busboyBody.fields.innerurl.val || "", busboyBody.fields.outerurl.val || "", busboyBody.fields.code.val || "", busboyBody.fields.id.val], function (error, results, fields) {
+                            // When done with the connection, release it.
+                            if (error) {connection.release(); res.status(503).send("Service is unavailable"); console.log("error in controller.js:482", error);}
+                            else {
+                                res.status(200).send("Website updated successfully");
+                            }
+                            });
+                        });
                     }
-                    else if(busboyBody.fields["field" + i].fieldname === "description"){
-                        description = busboyBody.fields["field" + i].val;
-                    }
-                    else if(busboyBody.fields["field" + i].fieldname === "code"){
-                        code = busboyBody.fields["field" + i].val;
-                    }
-                    else if(busboyBody.fields["field" + i].fieldname === "outerurl"){
-                        url = busboyBody.fields["field" + i].val;
-                    }
+                    catch(e) {
+                        console.log(e);
+                    }  
+                } 
+                else {
+                    res.status(422).send("Item was not selected");
                 }
-                for( let i = 0; i < Object.keys(busboyBody.files).length; i++ ){
-                    let stamp = Date.now().toString();
-                    let thumbnailurl = `static/images/website-${stamp}${busboyBody.files["file" + i].extension}`;
-                    if(i == 0){
-                        values.push(stamp, title, description, thumbnailurl, url, code);
+            break;
+            case "website":
+                if(busboyBody.fields.id.val){
+                    try{
+                        await model.getConnection((err, connection) => {
+                            if (err) {res.end("Server maintenance. Try again later."); console.log(err);}
+                            connection.query(`UPDATE ${process.env.DB_NAME}.websites SET title = ?, description = ?, innerurl = ?, outerurl = ?, code = "" WHERE id = ?`, [busboyBody.fields.title.val || "", busboyBody.fields.description.val || "", busboyBody.fields.innerurl.val || "", busboyBody.fields.outerurl.val || "", busboyBody.fields.id.val], function (error, results, fields) {
+                            // When done with the connection, release it.
+                            if (error) {connection.release(); res.status(503).send("Service is unavailable"); console.log("error in controller.js:504", error)}
+                            else {
+                                res.status(200).send("Website updated successfully");
+                            }
+                            });
+                        });
                     }
-                    else{
-                        query += ", (? ,? ,?, ?, ?, ?)";
-                        values.push(stamp, title, description, thumbnailurl, url, code);
+                    catch(e) {
+                        console.log(e);
                     }
+                } 
+                else {
+                    res.status(422).send("Item was not selected");
                 }
-                console.log("query: " + query);
-                console.log("values: " + values);
-                connection.query(query, values, function (error, results, fields) {
-                    // When done with the connection, release it.
-                    if (error) {throw error;}
-                    else {
-                        let writer = fs.createWriteStream(`public/` + values[3]);
-
-                        busboyBody.files["file" + 0].file.pipe(writer);  //pipe connects readable stream to the writeable stream   
-
-                        for( let j = 0; j < busboyBody.files["file" + 0].data.length; j++){ //loop handles all the existing parsed buffers
-                            writer.write(busboyBody.files["file" + 0].data[j]); //both .write and .end write to the writeable stream. Difference? .end also closes the stream
-                        }
-
-                        writer.end(); //do not try to write to file after end
-
-                        if (filecheck.length > 1){ //checks if there's more than one file coming from frontend and responds depending on it
-                            res.status(200).send("files have been uploaded successfully");
-                        } 
-                        else {
-                            res.status(200).send("file has been uploaded successfully");
-                        }
+            break;
+            case "image":
+                if(busboyBody.fields.id.val){
+                    try{
+                        await model.getConnection((err, connection) => {
+                            if (err) {res.end("Server maintenance. Try again later."); console.log(err);}
+                            connection.query(`UPDATE ${process.env.DB_NAME}.websites SET URL = ?, thumbnailurl = ?, title = ?, description = ? WHERE id = ?`, [busboyBody.fields.URL.val || "", busboyBody.fields.thumbnail.val || "", busboyBody.fields.title.val || "", busboyBody.fields.description.val || "", busboyBody.fields.id.val], function (error, results, fields) {
+                                // When done with the connection, release it.
+                                if (error) {connection.release(); res.status(503).send("Service is unavailable"); console.log("error in controller.js:526" ,error);}
+                                else {
+                                    res.status(200).send("Image updated successfully");
+                                }
+                            });
+                        });
                     }
-                    connection.release();
-                    console.log("Results of the database query: ");
-                    console.log(results);
-                });
-            });
-            
-        }
-        else{
-            console.log(filecheck);
-            res.status(422).send("only JPG, SVG, PNG up to 5MB are allowed.");
+                    catch(e) {
+                        console.log(e);
+                    }
+                } 
+                else {
+                    res.status(422).send("Item was not selected");
+                }
+            break;
+            default:
+                res.status(400).send("Invalid request. Make sure you filled all the necessary fields and try again.");
+            break;
         }
     }
 }
-

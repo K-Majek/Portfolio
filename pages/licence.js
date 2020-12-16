@@ -5,7 +5,7 @@ class licence extends React.Component {
     }
     render() {
         return (
-            <div className="licence-container flex flex-column flex-center">
+            <div className="licence-container flex flex-direction-column flex-align-start">
                 <h3><em>Licencja</em></h3>
                 <p>UTWÓR (ZDEFINIOWANY PONIŻEJ) PODLEGA NINIEJSZEJ LICENCJI PUBLICZNEJ CREATIVE COMMONS ("CCPL" LUB "LICENCJA"). UTWÓR PODLEGA OCHRONIE PRAWA AUTORSKIEGO LUB INNYCH STOSOWNYCH PRZEPISÓW PRAWA. KORZYSTANIE Z UTWORU W SPOSÓB INNY NIŻ DOZWOLONY NA PODSTAWIE NINIEJSZEJ LICENCJI LUB PRZEPISÓW PRAWA JEST ZABRONIONE. </p>
                 <p>WYKONANIE JAKIEGOKOLWIEK UPRAWNIENIA DO UTWORU OKREŚLONEGO W NINIEJSZEJ LICENCJI OZNACZA PRZYJĘCIE I ZGODĘ NA ZWIĄZANIE POSTANOWIENIAMI NINIEJSZEJ LICENCJI. </p>

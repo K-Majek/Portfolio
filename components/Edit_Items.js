@@ -4,7 +4,25 @@ import axios from "axios";
 export default class Edit_Items extends React.Component {
     constructor() {
         super();
-        this.state = {  };
+        this.state = { 
+            content: "main menu"
+        };
+        this.navigator = value => {
+            this.setState({content: value});
+        }
+        this.UpdateContent = e => {
+            e.preventDefault();
+            const form = document.querySelector(".edit-form");
+            const formData = new FormData(form);
+            axios({
+                method: "put",
+                headers: { 'content-type': 'multipart/formdata' },
+                url: '/API/UpdateContent',
+                data: formData
+            })
+            .then((response) => { console.log(response) })
+            .catch((error) => {console.log(error.data)})
+        }
     }
     componentDidMount(){
         axios({
@@ -13,7 +31,7 @@ export default class Edit_Items extends React.Component {
         })
         .then((response) => {
                 let mapper = response.data.map((data) => {
-                    return ( <EditableItemModel image="true" thumbnailurl={data.thumbnailurl} innerurl={data.innerurl} title={data.title} description={data.description || ""} key={data.id}/> );
+                    return ( <EditableItemModel UpdateContent={this.UpdateContent} image="true" thumbnailurl={data.thumbnailurl} innerurl={data.innerurl} title={data.title} description={data.description || ""} id={data.id} key={data.id}/> );
                 });
                 this.setState({imagecontent: mapper});
         })
@@ -27,10 +45,10 @@ export default class Edit_Items extends React.Component {
         .then((response) => {
                 let mapper = response.data.map((data) => {
                     if(data.code){
-                        return ( <EditableItemModel websitegithub="true" innerurl={data.innerurl || ""} outerurl={data.outerurl || ""} title={data.title || ""} description={data.description || ""} code={data.code || ""} key={data.id}/> );
+                        return ( <EditableItemModel UpdateContent={this.UpdateContent} websitegithub="true" innerurl={data.innerurl || ""} outerurl={data.outerurl || ""} title={data.title || ""} description={data.description || ""} code={data.code || ""} id={data.id} key={data.id}/> );
                     }
                     else{
-                        return ( <EditableItemModel website="true" innerurl={data.innerurl || ""} outerurl={data.outerurl || ""} title={data.title || ""} description={data.description || ""} code={data.code || ""} key={data.id}/> );
+                        return ( <EditableItemModel UpdateContent={this.UpdateContent} website="true" innerurl={data.innerurl || ""} outerurl={data.outerurl || ""} title={data.title || ""} description={data.description || ""} code={data.code || ""} id={data.id} key={data.id}/> );
                     }
                 });
                 this.setState({webcontent: mapper});
@@ -40,17 +58,33 @@ export default class Edit_Items extends React.Component {
         });
     }
     render() {
-        return (
-            <div className="flex flex-center flex-column region-full">
-                <div className="region-piece-1-2">
-                    <div className="region-piece-1-3 flex flex-center">Images</div>
-                    <div className="region-piece-2-3 flex flex-center flex-column">{this.state.imagecontent}</div>
-                </div>
-                <div className="region-piece-1-2">
-                    <div className="region-piece-1-3 flex flex-center">Websites</div>
-                    <div className="region-piece-2-3 flex flex-center flex-column">{this.state.webcontent}</div>
-                </div>
-            </div>
-        );
+        switch(this.state.content) {
+            case "images":
+                return (
+                    <section className="edit-section">
+                        <button className="formbutton custom" onClick={this.navigator.bind(this, "main menu")} >Go Back</button>
+                        <p className="edit-section-title flex flex-justify-center">Images</p>
+                        <div className="flex flex-align-center flex-direction-row">{this.state.imagecontent}</div>
+                        <button className="formbutton custom" onClick={this.navigator.bind(this, "main menu")} >Go Back</button>
+                    </section>
+                );
+            case "websites":
+                return (
+                    <section className="edit-section">
+                        <button className="formbutton custom" onClick={this.navigator.bind(this, "main menu")} >Go Back</button>
+                        <p className="edit-section-title flex flex-justify-center">Websites</p>
+                        <div className="flex flex-align-center flex-direction-row">{this.state.webcontent}</div>
+                        <button className="formbutton custom" onClick={this.navigator.bind(this, "main menu")} >Go Back</button>
+                    </section>
+                );
+            default:
+                return (
+                    <section className="edit-section flex flex-direction-column">
+                        <button className="formbutton custom" onClick={this.navigator.bind(this, "images")} >Images</button>
+                        <button className="formbutton custom" onClick={this.navigator.bind(this, "websites")} >Websites</button>
+                    </section>
+                );
+        }
+        
     }
 }

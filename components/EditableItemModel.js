@@ -28,37 +28,19 @@ export default class EditableItemModel extends React.Component {
                 backgroundColor: "black"
             },
             editmode: false,
-            title: "",
-            innerurl: "",
-            outerurl: "",
-            description: "",
-            code: "",
-            thumbnailurl: "",
+            id: this.props.id || "",
+            title: this.props.title || "",
+            innerurl: this.props.innerurl || "",
+            outerurl: this.props.outerurl || "",
+            description: this.props.description || "",
+            code: this.props.code || "",
+            thumbnailurl: this.props.thumbnailurl || "",
 
         };
-         this.show = (e) => {
-            if(e.target.classList.contains("item-hide")){e.target.classList.remove("item-hide")};
-            if(e.target.classList.contains("item-details")){e.target.classList.add("item-show");};
-            
-        }
-        this.hide = (e) => {
-            if(e.target.classList.contains("item-show")){e.target.classList.remove("item-show")};
-            if(e.target.classList.contains("item-details")){e.target.classList.add("item-hide");};
-        }
-        this.unhover = (e) => {
-            if(!e.target.classList.contains("unhover")) { e.target.classList.add("unhover"); }
-        }
-        this.hover = (e) => {
-            if(e.target.classList.contains("unhover")) { e.target.classList.remove("unhover"); }
-        }
         this.handleChange = (e) => {
         this.setState({
             [e.target.name]: e.target.value
         });
-        }
-        this.update = (data) => {
-            e.preventDefault();
-            //axios
         }
         this.edit = () => {
             let tmp = !this.state.editmode;
@@ -73,42 +55,47 @@ export default class EditableItemModel extends React.Component {
     render() {
         if(!this.state.editmode && this.props.websitegithub){
             return (
-                <div className="item">
-                    <div className="item-visual flex flex-center flex-column absolute">
-                        <div className="item-thumbnail region-piece-3-4" style={this.state.websiteStyle}></div>
-                        <div className="item-title region-piece-1-4 flex flex-center">{this.props.title}</div>
-                    </div>
-                    <div className="item-details flex-center flex-column region-full" onMouseEnter={this.show} onMouseLeave={this.hide}>
-                        <div className="item-description flex flex-center region-piece-2-3">{this.props.description}</div>
-                        <div className="item-links flex flex-center flex-row region-piece-1-3">
-                            <Link href={`http://${this.props.outerurl}`}>
-                                <a className="item-button flex flex-center pointer" onMouseEnter={this.hover} onMouseLeave={this.unhover} target="_blank" rel="noreferrer">Link</a>
-                            </Link>
-                            <Link href={`http://${this.props.code}`}>
-                                <a className="item-button flex flex-center pointer" onMouseEnter={this.hover} onMouseLeave={this.unhover} target="_blank" rel="noreferrer">Code</a>
-                            </Link>
+                <div>
+                    <div className="item">
+                        <div className="item-visual">
+                            <img src={this.state.innerurl} className="item-thumbnail" style={this.state.websiteStyle}></img>
+                            <p className="item-title">{this.state.title}</p>
+                        </div>
+                        <div className="item-details">
+                            <p className="item-description">{this.state.description}</p>
+                            <div className="item-links">
+                                <Link href={`http://${this.state.outerurl}`}>
+                                    <a className="item-button" target="_blank" rel="noreferrer">Link</a>
+                                </Link>
+                                <Link href={`http://${this.state.code}`}>
+                                    <a className="item-button" target="_blank" rel="noreferrer">Code</a>
+                                </Link>
+                            </div>
                         </div>
                     </div>
+                    <button type="button" className="item-toggler" onClick={this.edit}>EDIT</button>
                 </div>
             );
         }
         else if(this.state.editmode && this.props.websitegithub){
             return(
                 <div className="item-edit">
-                    <div>{this.props.id}</div>
+                    <div>{this.state.id}</div>
                     <form className="edit-form">
                         <label htmlFor="title"></label>
-                        <input className="edit-form-item" name="title" value={this.state.title || this.props.title} onChange={this.handleChange}/>
+                        <input className="edit-form-item formbutton auto" name="title" value={this.state.title} onChange={this.handleChange}/>
                         <label htmlFor="description"></label>
-                        <input className="edit-form-item" name="description" value={this.state.description || this.props.description} onChange={this.handleChange}/>
+                        <input className="edit-form-item formbutton auto" name="description" value={this.state.description} onChange={this.handleChange}/>
                         <label htmlFor="innerurl"></label>
-                        <input className="edit-form-item" name="innerurl" value={this.state.innerurl || this.props.innerurl} onChange={this.handleChange}/>
+                        <input className="edit-form-item formbutton auto" name="innerurl" value={this.state.innerurl} onChange={this.handleChange}/>
                         <label htmlFor="outerurl"></label>
-                        <input className="edit-form-item" name="outerurl" value={this.state.outerurl || this.props.outerurl} onChange={this.handleChange}/>
+                        <input className="edit-form-item formbutton auto" name="outerurl" value={this.state.outerurl} onChange={this.handleChange}/>
                         <label htmlFor="code"></label>
-                        <input className="edit-form-item" name="code" value={this.state.code || this.props.code} onChange={this.handleChange}/>
-                        <button type="submit" />
-                        <button type="button" />
+                        <input className="edit-form-item formbutton auto" name="code" value={this.state.code} onChange={this.handleChange}/>
+                        <input type="hidden" name="type" value="github" />
+                        <input type="hidden" name="id" value={this.state.id} />
+                        <button type="submit" onClick={this.props.UpdateContent} className="formbutton auto"/>
+                        <button type="button" className="formbutton auto"/>
                     </form>  
                 </div>
             );
@@ -117,15 +104,15 @@ export default class EditableItemModel extends React.Component {
             return (
                 <div>
                     <div className="item">
-                        <div className="item-visual flex flex-center flex-column absolute">
-                            <div className="item-thumbnail region-piece-3-4" style={this.state.websiteStyle}></div>
-                            <div className="item-title region-piece-1-4 flex flex-center">{this.props.title}</div>
+                        <div className="item-visual">
+                            <img src={this.state.innerurl} className="item-thumbnail" style={this.state.websiteStyle}></img>
+                            <p className="item-title">{this.state.title}</p>
                         </div>
-                        <div className="item-details hidden flex-center flex-column" onMouseEnter={this.show} onMouseLeave={this.hide}>
-                            <div className="item-description flex flex-center region-piece-2-3">{this.props.description}</div>
-                            <div className="item-links flex flex-center flex-row region-piece-1-3">
-                                <Link href={`http://${this.props.outerurl}`}>
-                                    <a className="item-button flex flex-center pointer" onMouseEnter={this.hover} onMouseLeave={this.unhover} target="_blank" rel="noreferrer">Link</a>
+                        <div className="item-details">
+                            <p className="item-description">{this.state.description}</p>
+                            <div className="item-links">
+                                <Link href={`http://${this.state.outerurl}`}>
+                                    <a className="item-button" target="_blank" rel="noreferrer">Link</a>
                                 </Link>
                             </div>
                         </div>
@@ -137,62 +124,67 @@ export default class EditableItemModel extends React.Component {
         else if(this.state.editmode && this.props.website){
             return(
                 <div className="item-edit flex flex-center">
-                    <div>{this.props.id}</div>
                     <form className="edit-form flex flex-center flex-column region-full">
                         <label htmlFor="title"></label>
-                        <input className="edit-form-item" name="title" value={this.state.title || this.props.title} onChange={this.handleChange}/>
+                        <input className="edit-form-item formbutton auto" name="title" value={this.state.title} onChange={this.handleChange}/>
                         <label htmlFor="description"></label>
-                        <input className="edit-form-item" name="description" value={this.state.description || this.props.description} onChange={this.handleChange}/>
+                        <input className="edit-form-item formbutton auto" name="description" value={this.state.description} onChange={this.handleChange}/>
                         <label htmlFor="innerurl"></label>
-                        <input className="edit-form-item" name="innerurl" value={this.state.innerurl || this.props.innerurl} onChange={this.handleChange}/>
+                        <input className="edit-form-item formbutton auto" name="innerurl" value={this.state.innerurl} onChange={this.handleChange}/>
                         <label htmlFor="outerurl"></label>
-                        <input className="edit-form-item" name="outerurl" value={this.state.outerurl || this.props.outerurl} onChange={this.handleChange}/>
-                        <button type="submit" className="top-margin-l">Update</button>
-                        <button type="button" onClick={this.edit}>Cancel</button>
+                        <input className="edit-form-item formbutton auto" name="outerurl" value={this.state.outerurl} onChange={this.handleChange}/>
+                        <input type="hidden" name="type" value="website" />
+                        <input type="hidden" name="id" value={this.state.id} />
+                        <button type="submit" onClick={this.props.UpdateContent} className="formbutton auto">Update</button>
+                        <button type="button" className="formbutton auto" onClick={this.edit}>Cancel</button>
                     </form>  
                 </div>
             );
         }
         else if(!this.state.editmode && this.props.image){
             return (
-                <div className="item">
-                    <div className="item-visual flex flex-center flex-column absolute">
-                        <div className="item-thumbnail region-piece-3-4" style={this.state.imageStyle}></div>
-                        <div className="item-title region-piece-1-4 flex flex-center">{this.props.title}</div>
-                    </div>
-                    <div className="item-details hidden flex-center flex-column" onMouseEnter={this.show} onMouseLeave={this.hide}>
-                        <div className="item-description flex flex-center region-piece-2-3">{this.props.description}</div>
-                        <div className="item-links flex flex-center flex-row region-piece-1-3">
-                            <Link href={this.props.innerurl}>
-                                <a className="item-button flex flex-center pointer" onMouseEnter={this.hover} onMouseLeave={this.unhover} target="_blank" rel="noreferrer">Link</a>
-                            </Link>
+                <div>
+                    <div className="item">
+                        <div className="item-visual">
+                            <img src={this.state.thumbnailurl} className="item-thumbnail" style={this.state.imageStyle}></img>
+                            <p className="item-title">{this.state.title}</p>
+                        </div>
+                        <div className="item-details">
+                            <p className="item-description">{this.state.description}</p>
+                            <div className="item-links">
+                                <Link href={this.state.innerurl}>
+                                    <a className="item-button" target="_blank" rel="noreferrer">Link</a>
+                                </Link>
+                            </div>
                         </div>
                     </div>
+                    <button type="button" className="formbutton auto" onClick={this.edit}>Cancel</button>
                 </div>
             );
         }
         else if(this.state.editmode && this.props.image){
             return(
                 <div className="item-edit">
-                    <div>{this.props.id}</div>
                     <form className="edit-form">
                         <label htmlFor="title"></label>
-                        <input className="edit-form-item" name="title" value={this.state.title || this.props.title} onChange={this.handleChange}/>
+                        <input type="text" className="edit-form-item formbutton auto" name="title" value={this.state.title} onChange={this.handleChange}/>
                         <label htmlFor="description"></label>
-                        <input className="edit-form-item" name="description" value={this.state.description || this.props.description} onChange={this.handleChange}/>
+                        <input type="text" className="edit-form-item formbutton auto" name="description" value={this.state.description} onChange={this.handleChange}/>
                         <label htmlFor="innerurl"></label>
-                        <input className="edit-form-item" name="innerurl" value={this.state.innerurl || this.props.innerurl} onChange={this.handleChange}/>
+                        <input type="text" className="edit-form-item formbutton auto" name="innerurl" value={this.state.innerurl} onChange={this.handleChange}/>
                         <label htmlFor="thumbnailurl"></label>
-                        <input className="edit-form-item" name="thumbnailurl" value={this.state.outerurl || this.props.outerurl} onChange={this.handleChange}/>
-                        <button type="submit" />
-                        <button type="button" />
+                        <input type="text" className="edit-form-item formbutton auto" name="thumbnailurl" value={this.state.outerurl} onChange={this.handleChange}/>
+                        <input type="hidden" name="type" value="image" />
+                        <input type="hidden" name="id" value={this.state.id} />
+                        <button type="submit" onClick={this.props.UpdateContent} className="formbutton auto"/>
+                        <button type="button" className="formbutton auto"/>
                     </form>  
                 </div>
             );
         }
         else{
             return(
-                <div>Element {this.props.id} has been crashed. Sorry.</div>
+                <p>Element {this.state.id} has been crashed. Sorry.</p>
             );
         }
     }

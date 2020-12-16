@@ -1,12 +1,12 @@
-const express = require('express');
-const next = require('next');
-const bodyParser = require("body-parser");
+const path = require("path");
 const port = parseInt(process.env.PORT, 10) || 3000;
+const express = require('express');
+const bodyParser = require("body-parser");
+const next = require('next');
 const dev = process.env.NODE_ENV !== 'production';
 const app = next({ dev });
 const handle = app.getRequestHandler();
 const mysql = require("mysql2");
-const path = require("path");
 const bcrypt = require("bcrypt");
 
 const router = require("../routes/router");
@@ -128,7 +128,8 @@ app.prepare().then(() => {
   });
 });
 
-exports.getConnection = async (cb) => { //exportable mysql query module
+//exportable mysql query module
+exports.getConnection = async (cb) => { 
   await pool.getConnection(function(error, connection){
     if(error){
       return cb(error);

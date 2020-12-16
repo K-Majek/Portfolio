@@ -64,12 +64,12 @@ class cPanel extends React.Component {
             let formData = new FormData(target);
             if(target.username.value.length < 4){ 
                 this.setState({
-                    usernamemsg: `Username must be between 4 and 20 characters.`
+                    usernamemsg: `username must be between 4 and 20 characters`
                 })
             }
             if(target.password.value.length < 8){ 
                 this.setState({
-                    passwordmsg: `Username must contain at least 8 characters.`
+                    passwordmsg: `password must contain at least 8 characters`
                 })
             }
             if(target.password.value.length >= 8 && target.username.value.length >= 4){
@@ -142,20 +142,20 @@ class cPanel extends React.Component {
     render() {
         if(this.state.isloggedin){
             return (
-                <div className="flex flex-center">
-                    <div className="sidepanel flex flex-column">
-                        <div className="sidepanel-category flex flex-center" onClick={() => {this.swapDisplay(event, "1")}}>
-                            ADD Items
+                <div className="cPanel">
+                    <div className="sidepanel flex flex-direction-column">
+                        <div className="sidepanel-category flex flex-align-center flex-justify-center" onClick={() => {this.swapDisplay(event, "1")}}>
+                            <p>ADD Items</p>
                         </div>
-                        <div className="sidepanel-category flex flex-center" onClick={() => {this.swapDisplay(event, "2")}}>
-                            List Items
+                        <div className="sidepanel-category flex flex-align-center flex-justify-center" onClick={() => {this.swapDisplay(event, "2")}}>
+                            <p>List Items</p>
                         </div>
-                        <div className="sidepanel-category flex flex-center" onClick={() => {this.swapDisplay(event, "3")}}>
-                            Edit Items
+                        <div className="sidepanel-category flex flex-align-center flex-justify-center" onClick={() => {this.swapDisplay(event, "3")}}>
+                            <p>Edit Items</p>
                         </div>
                         <Link href="/">
-                            <div className="sidepanel-category flex flex-center">
-                                Go Back to site
+                            <div className="sidepanel-category flex flex-align-center flex-justify-center">
+                                <p>Go back to site</p>
                             </div>
                         </Link>
                     </div>
@@ -182,20 +182,17 @@ class cPanel extends React.Component {
         }
         else{
             return(
-                <div className="viewport flex flex center flex-column">
-                    <div className="region-piece-1-10"><div className="flex flex-center">{this.state.message}</div></div>
-                    <div className="region-piece-8-10">
-                        <form id="loginform" className="flex flex-center flex-column region-full">
-                            <label htmlFor="username">Username</label>
-                            <input type="text" name="username" />
-                            <div>{this.state.usernamemsg}</div>
-                            <label htmlFor="password">Password</label>
-                            <input type="password" name="password" />
-                            <div>{this.state.passwordmsg}</div>
-                            <button type="submit" onClick={this.handleLogin}>Submit!</button>
-                        </form>
-                    </div>
-                    <div className="region-piece-1-10"></div>
+                <div className="panel flex flex center flex-column">
+                    <p>{this.state.message}</p>
+                    <form id="loginform" className="flex flex-center flex-column region-full">
+                        <label htmlFor="username">Username</label>
+                        <input id="loginform-username" type="text" name="username" autoComplete="off" />
+                        <p>{this.state.usernamemsg}</p>
+                        <label htmlFor="password">Password</label>
+                        <input id="loginform-password" type="password" name="password" autoComplete="off" />
+                        <p>{this.state.passwordmsg}</p>
+                        <button id="loginform-button" type="submit" onClick={this.handleLogin}>Submit!</button>
+                    </form>
                 </div>
             )
         }
