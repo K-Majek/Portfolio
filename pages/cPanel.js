@@ -15,11 +15,11 @@ class cPanel extends React.Component {
         }
         this.handleImageUpload = (e) => {
             e.preventDefault();
-            let form = document.getElementById("uploadimage");
+            let form = document.querySelector("form");
             let formdata = new FormData(form);
             axios({
                 method: 'post',
-                url: '/API/SendImage',
+                url: '/API/SendContent',
                 data: formdata,
                 headers: {'Content-Type': 'multipart/form-data' }
                 })

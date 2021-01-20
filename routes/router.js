@@ -4,13 +4,9 @@ const controller = require("./controllers/controller");
 
 router.all("/API/SandboxLab", controller.SandboxLab);
 
-router.get("/API/GetWebsites", controller.GetWebsites);
+router.get("/API/GetContent", controller.GetContent);
 
-router.get("/API/GetImages", controller.GetImages);
-
-router.post("/API/SendWebsite", controller.SendContent);
-
-router.post("/API/SendImage", controller.SendContent);
+router.post("/API/SendContent", controller.SendContent);
 
 router.post("/API/Login", controller.Login);
 

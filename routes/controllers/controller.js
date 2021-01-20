@@ -6,8 +6,8 @@ const path = require("path");
 const bcrypt = require("bcrypt");
 const Busboy = require('busboy');
 const model = require("../../server/index");
-const { send } = require("process");
 const sharp = require("sharp");
+const stream = require("stream");
 require("dotenv").config({ path: path.join(__dirname, "..", "..", "config", ".env")});
 
 
@@ -240,25 +240,10 @@ exports.Register = (req, res) => {
     }
 }
 
-exports.GetImages = async (req, res) => { //R in CRUD
+exports.GetContent = async (req,res) => { //R in CRUD
     await model.getConnection((err, connection) => {
         if (err) {res.end("Server maintenance. Try again later."); throw err;}
-        connection.query(`SELECT * FROM ${process.env.DB_NAME}.images`, function (error, results, fields) {
-          // When done with the connection, release it.
-          if (error) {connection.release(); res.status(503).send("Service is unavailable"); throw error;}
-          else {
-            let parsedResults = JSON.stringify(results);
-            res.end(parsedResults);
-            connection.release();
-          }
-        });
-    });
-}
-
-exports.GetWebsites = async (req,res) => { //R in CRUD
-    await model.getConnection((err, connection) => {
-        if (err) {res.end("Server maintenance. Try again later."); throw err;}
-        connection.query(`SELECT * FROM ${process.env.DB_NAME}.websites`, function (error, results, fields) {
+        connection.query(`SELECT * FROM ${process.env.DB_NAME}.items`, function (error, results, fields) {
           // When done with the connection, release it.
           if (error) {connection.release(); res.status(503).send("Service is unavailable"); throw error;}
           else {
@@ -327,13 +312,13 @@ exports.SendContent = (req, res) => { //C in CRUD
         };
     });
     busboy.on('finish', function() {
-        console.log(busboyBody);
+        // console.log(busboyBody);
         send();
     });
     req.pipe(busboy);
 
     const send = async () => {
-        model.getConnection((err, connection) => {
+        if(!busboyBody.files["file0"].lock){model.getConnection((err, connection) => {
             if(err) console.log(err);
             switch(busboyBody.fields.type.val){
                 case "website": {
@@ -341,20 +326,20 @@ exports.SendContent = (req, res) => { //C in CRUD
                     let id = Date.now().toString();
                     let title = busboyBody.fields.title.val;
                     let description = busboyBody.fields.description.val;
-                    let innerurl = `static/images/website-${id}${busboyBody.files["file0"].extension}`;
                     let outerurl = busboyBody.fields.outerurl.val;
                     let code = busboyBody.fields.code.val ? busboyBody.fields.code.val : ""; //code is a must
                     let type = busboyBody.fields.type.val;
-                    let values = [id, title, description, innerurl, outerurl, code, type];
-                    const original_path = `public/static/images/website-${id}${busboyBody.files["file0"].extension}`
-                    const temp_path = `public/static/images/website-${id}-temp${busboyBody.files["file0"].extension}`
+                    let file = `website-${id}${busboyBody.files["file0"].extension}`;
+                    let file_temp = `website-${id}-temp${busboyBody.files["file0"].extension}`;
+                    let server_path = "public/static/images/";
+                    let values = [id, title, description, file, outerurl, code, type];
                     connection.query(query, values, async (error, results, fields) => {
                         if(error) { 
                             connection.release(); 
                             console.log(error); 
                         }
                         else {
-                            let writer = fs.createWriteStream(original_path)
+                            let writer = fs.createWriteStream(server_path+file)
                             busboyBody.files["file0"].file.pipe(writer);  //pipe connects readable stream to the writeable stream   
 
                             for( let i = 0; i < busboyBody.files["file0"].data.length; i++){ //loop handles all the existing parsed buffers
@@ -364,31 +349,32 @@ exports.SendContent = (req, res) => { //C in CRUD
                             writer.end(); //do not try to write to file after end
                             try { 
                                 if(busboyBody.files["file0"].extension.toLowerCase() === ".jpg" || busboyBody.files["file0"].extension.toLowerCase() === ".jpeg"){
-                                    await sharp(original_path).png()
-                                    .resize(420, 313)
-                                    .toFile(temp_path)
-                                    .then(() => {
-                                        fs.unlink(original_path, (err) => { 
-                                            if(err) {console.log(err)}
-                                            else{
-                                                fs.rename(temp_path, original_path, () => {
-                                                    console.log("renamed");
-                                                });
-                                            }
+                                    await sharp(server_path+file).jpeg({quality: 80})
+                                        .resize({width: 1500})
+                                        .toFile(server_path+file_temp)
+                                        .then(() => {
+                                            fs.unlink(server_path+file, (err) => { 
+                                                if(err) {console.log(err); res.status(500).send("something went wrong");}
+                                                else{
+                                                    fs.rename(server_path+file_temp, server_path+file, () => {
+                                                        console.log("renamed");
+                                                        res.send("image uploaded successfully");
+                                                    });
+                                                }
+                                            });
                                         });
-                                    });
                                 }
                                 else if(busboyBody.files["file0"].extension.toLowerCase() === ".png"){
-                                    await sharp(original_path)
-                                        .png()
-                                        .resize(420, 313)
-                                        .toFile(temp_path)
+                                    await sharp(server_path+file).png({quality: 80})
+                                        .resize({width: 1500})
+                                        .toFile(server_path+file_temp)
                                         .then(() => {
-                                            fs.unlink(original_path, (err) => { 
-                                                if(err) {console.log(err)}
+                                            fs.unlink(server_path+file, (err) => { 
+                                                if(err) {console.log(err); res.status(500).send("something went wrong");}
                                                 else{
-                                                    fs.rename(temp_path, original_path, () => {
+                                                    fs.rename(server_path+file_temp, server_path+file, () => {
                                                         console.log("renamed");
+                                                        res.send("image uploaded successfully");
                                                     });
                                                 }
                                             });
@@ -420,57 +406,69 @@ exports.SendContent = (req, res) => { //C in CRUD
                     let code = ""; //code is a must
                     let type = busboyBody.fields.type.val;
                     let values = [id, title, description, file_minified, file, code, type];
-                    connection.query(query, values, (error, results, fields) => {
+                    connection.query(query, values, async (error, results, fields) => {
                         if(error) { 
                             connection.release(); 
                             console.log(error); 
                         }
                         else {
-                            let writer = fs.createWriteStream(serverpath + file);
-                            busboyBody.files["file0"].file.pipe(writer);  //pipe connects readable stream to the writeable stream   
+                            let writer = fs.createWriteStream(serverpath + file);  
 
                             for( let i = 0; i < busboyBody.files["file0"].data.length; i++){ //loop handles all the existing parsed buffers
                                 writer.write(busboyBody.files["file0"].data[i]); //both .write and .end write to the writeable stream. Difference? .end also closes the stream
-                                console.log("writing is pending");
                             }
 
                             writer.end(); //do not try to write to file after end
                             try { 
                                 console.log("try block here");
                                 if(busboyBody.files["file0"].extension.toLowerCase() === ".jpg" || busboyBody.files["file0"].extension.toLowerCase() === ".jpeg"){
-                                    fs.copyFile(serverpath + file, serverpath + file_temp, async () => {
-                                        await sharp(serverpath + file_temp)
-                                            .jpeg({ quality: 80 })
-                                            .toFile(serverpath + file_minified)
-                                            .then(() => {
-                                                console.log(`file ${busboyBody.files["file0"].filename} should be changed into ${file_minified}`);
-                                            })
-                                            .catch((e) => {console.log(e);});
-                                    });
+                                    await sharp(serverpath + file)
+                                        .resize({width: 1500})
+                                        .toFile(serverpath + file_minified)
+                                        .then(
+                                            async () => {
+                                                await sharp(serverpath + file_minified)
+                                                    .jpeg({quality: 80});
+                                                res.send("image uploaded successfully");
+                                            }
+                                        )
+                                        .catch(e => {
+                                            console.log(e);
+                                            res.status(500).send("something went wrong");
+                                        })
                                 }
                                 else if(busboyBody.files["file0"].extension.toLowerCase() === ".png"){
-                                    fs.copyFile(outerurl, temp_path, async () => {
-                                        await sharp(temp_path)
-                                            .png({ quality: 50 })
-                                            .toFile(innerurl)
-                                            .then(() => {
-                                                console.log(`file ${busboyBody.files["file0"].filename} should be changed into ${innerurl.slice(innerurl.lastIndexOf("/"))}`);
-                                                res.status(200).send("ok");
-                                            })
-                                            .catch((e) => {console.log(e);});
-                                    });
+                                    await sharp(serverpath + file)
+                                        .resize({width: 1500})
+                                        .toFile(serverpath + file_minified)
+                                        .then(
+                                            async () => {
+                                                await sharp(serverpath + file_minified)
+                                                    .png({quality: 80})
+                                                res.send("image uploaded successfully");
+                                            }
+                                        )
+                                        .catch(e => {
+                                            console.log(e);
+                                            res.status(500).send("something went wrong");
+                                        })
+                                        
                                 }
                                 else if(busboyBody.files["file0"].extension.toLowerCase() === ".webp"){
-                                    fs.copyFile(outerurl, temp_path, async () => {
-                                        await sharp(temp_path)
-                                            .webp({ quality: 50 })
-                                            .toFile(innerurl)
-                                            .then(() => {
-                                                console.log(`file ${busboyBody.files["file0"].filename} should be changed into ${innerurl.slice(innerurl.lastIndexOf("/"))}`);
-                                                res.status(200).send("ok");
-                                            })
-                                            .catch((e) => {console.log(e);});
-                                    });
+                                    await sharp(serverpath + file)
+                                        .resize({width: 1500})
+                                        .toFile(serverpath + file_minified)
+                                        .then(
+                                            async () => {
+                                                await sharp(serverpath + file_minified)
+                                                    .webp({quality: 80});
+                                                res.send("image uploaded successfully");
+                                            }
+                                        )
+                                        .catch(e => {
+                                            console.log(e);
+                                            res.status(500).send("something went wrong");
+                                        })
                                 }
                                 else {
                                     console.log("file failed to optimise");
@@ -495,6 +493,12 @@ exports.SendContent = (req, res) => { //C in CRUD
         });
         
     }
+    else{
+        res.status(413).send("File is too large to process");
+    }
+
+    }
+    
 }
 
 exports.UpdateContent = (req, res) => {

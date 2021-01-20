@@ -43,8 +43,7 @@ export default class EditableItemModel extends React.Component {
         });
         }
         this.edit = () => {
-            let tmp = !this.state.editmode;
-            this.setState({editmode: tmp});
+            this.setState({editmode: !this.state.editmode});
         }
     }
     componentDidMount() {
@@ -158,7 +157,7 @@ export default class EditableItemModel extends React.Component {
                             </div>
                         </div>
                     </div>
-                    <button type="button" className="formbutton auto" onClick={this.edit}>Cancel</button>
+                    <button type="button" className="formbutton auto" onClick={this.edit}>Edit</button>
                 </div>
             );
         }
@@ -171,13 +170,13 @@ export default class EditableItemModel extends React.Component {
                         <label htmlFor="description"></label>
                         <input type="text" className="edit-form-item formbutton auto" name="description" value={this.state.description} onChange={this.handleChange}/>
                         <label htmlFor="innerurl"></label>
-                        <input type="text" className="edit-form-item formbutton auto" name="innerurl" value={this.state.innerurl} onChange={this.handleChange}/>
+                        <input type="text" className="edit-form-item formbutton auto" name="innerurl" value={this.state.thumbnailurl} onChange={this.handleChange}/>
                         <label htmlFor="thumbnailurl"></label>
-                        <input type="text" className="edit-form-item formbutton auto" name="thumbnailurl" value={this.state.outerurl} onChange={this.handleChange}/>
+                        <input type="text" className="edit-form-item formbutton auto" name="thumbnailurl" value={this.state.innerurl} onChange={this.handleChange}/>
                         <input type="hidden" name="type" value="image" />
                         <input type="hidden" name="id" value={this.state.id} />
-                        <button type="submit" onClick={this.props.UpdateContent} className="formbutton auto"/>
-                        <button type="button" className="formbutton auto"/>
+                        <button type="submit" onClick={this.props.UpdateContent} className="formbutton auto">Update</button>
+                        <button type="button" className="formbutton auto" onClick={this.edit}>Cancel</button>
                     </form>  
                 </div>
             );
